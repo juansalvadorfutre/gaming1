@@ -1,0 +1,87 @@
+﻿@model Application.Handlers.Gaming.Join.JoinGameResponse
+
+<div class="container">
+    <div class="row align-items-center">
+        <div>
+            <h1>Lets Play</h1>
+            <p>The rules are easy: You must enter a number between @Model.Min and @Model.Max</p>
+        </div>
+    </div>
+    <form novalidate id="inputForm">
+        <div class="form-group">
+            <label for="exampleInputEmail1">Bet</label>
+            <input type="number" class="form-control" id="bet" name="bet" min="1" max="100" required>
+            <small class="form-text text-muted">Insert your bet here.</small>
+        </div>
+        <div style="padding-top:10px">
+            <button id="playButton" type="button" class="btn btn-primary">Play</button>
+        </div>
+    </form>
+    <div id="betResult" style="padding-top:50px"></div>
+    <div id="gameOverMessage" style="padding-top:50px"></div>
+    <div id="homeButton" style="padding-top:10px;display:none">
+        <a href="@Url.Action("Index", "Home")" class="btn btn-primary">Home!</a>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
+
+<script>
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl('/gameHub')
+        .build();
+
+    connection.start()
+        .then(() => console.log('SignalR connection started.'))
+        .catch(console.error);
+
+    connection.on('GameOver', result =>
+    {
+        $("#gameOverMessage").text(`Game over... Another player won!!!`);
+        $("#betResult").hide();
+        $("#inputForm").hide();
+        $("#homeButton").show();
+    });
+
+    $(function() {
+        $("#playButton").click(function() {
+            if ($("#bet")[0].checkValidity()) {
+                var bet = $("#bet").val();
+
+                $.ajax({
+                    url: "@Url.Action("Play", "Game")",
+                    type: "POST",
+                    data: { bet: bet },
+                    success: function(result) {
+                        debugger;
+                        if (result.data.gameStatus != 1)
+                        {
+                            //Running
+                            $("#betResult").html(result.partialViewHtml);
+                            if (result.data.betResult == 0)
+                            {
+                                //Success
+                                connection.invoke("NotifyOtherPlayersFromFrontEnd").catch(function (err) {
+                                    return console.error(err.toString());
+                                });
+                                $("#inputForm").hide();
+                                $("#homeButton").show();
+                            }
+                        }
+                    },
+                    error: function() {
+                        $("#betResult").html("An error occurred.");
+                    }
+                });
+            } else {
+                $("#bet")[0].reportValidity();
+            }
+        });
+        
+    });
+</script>
+
+

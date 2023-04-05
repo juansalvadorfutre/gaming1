@@ -1,0 +1,22 @@
+﻿@using Domain.Enums
+@model Application.Handlers.Gaming.Play.PlayGameResponse
+
+
+<div class="container">
+    <div class="row align-items-center">
+        <div>
+            @if (Model.BetResult == BetResult.Hi)
+            {
+                <p>The inserted number is higher than the mystery name</p>
+            }
+            else if (Model.BetResult == BetResult.Lo)
+            {
+                <p>The inserted number is lower than the mystery name</p>
+            }
+            else if (Model.BetResult == BetResult.Success)
+            {
+                <p style="font-size:20px; font-weight:500">Bingo!</p>
+            }
+        </div>
+    </div>
+</div>
